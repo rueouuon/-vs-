@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>보리 낱알 발아 및 지베렐린 신호전달 정밀 시뮬레이션</title>
+    <style>
+        body {
+            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { font-size: 22px; margin-bottom: 15px; color: #38bdf8; text-align: center; }
+        .main-layout {
+            display: flex;
+            width: 1100px;
+            gap: 20px;
+        }
+        /* 시각화 화면 영역 */
+        .visual-box {
+            flex: 1.3;
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            position: relative;
+            height: 520px;
+            border: 1px solid #334155;
+        }
+        /* 조작 및 설명 패널 */
+        .control-box {
+            flex: 1;
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 1px solid #334155;
+        }
+        /* 세포 및 핵 구조 */
+        .cell-alpha {
+            width: 480px;
+            height: 440px;
+            border: 2px dashed #10b981;
+            border-radius: 12px;
+            position: absolute;
+            left: 20px;
+            top: 40px;
+            background-color: rgba(16, 185, 129, 0.05);
+        }
+        .cell-label {
+            position: absolute;
+            top: 8px;
+            left: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #34d399;
+        }
+        .nucleus {
+            width: 240px;
+            height: 240px;
+            /* 핵막은 이중막이므로 두껍고 독특한 테두리 표현 */
+            border: 4px solid #60a5fa;
+            box-shadow: inset 0 0 15px rgba(96, 165, 250, 0.2);
+            border-radius: 50%;
+            position: absolute;
+            right: 30px;
+            top: 110px;
+            background-color: rgba(30, 58, 138, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nucleus-label {
+            position: absolute;
+            top: 8px;
+            color: #93c5fd;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .ribosome {
+            width: 80px;
+            height: 40px;
+            border: 2px dotted #f59e0b;
+            border-radius: 8px;
+            position: absolute;
+            left: 50px;
+            top: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #fcd34d;
+            background: rgba(245, 158, 11, 0.1);
+        }
+        /* 분자 요소 스타일링 */
+        .molecule {
+            position: absolute;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+            transition: all 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+        #gibberellin { background-color: #ef4444; left: -60px; top: 230px; }
+        #poly-x { background-color: #f97316; left: 80px; top: 260px; opacity: 0; }
+        #poly-y { background-color: #a855f7; left: 80px; top: 260px; opacity: 0; }
+        
+        /* 카운터 및 설명 패널 */
+        .counter-panel {
+            background: #0f172a;
+            border: 1px solid #334155;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+        .counter-title { color: #38bdf8; font-weight: bold; margin-bottom: 6px; }
+        .counter-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        
+        .explanation-panel {
+            background: #0f172a;
+            border: 1px solid #334155;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #cbd5e1;
+            height: 160px;
+            overflow-y: auto;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background-color: #0284c7;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #0369a1; }
+        button:disabled { background-color: #475569; cursor: not-allowed; color: #94a3b8; }
+    </style>
+</head>
+<body>
+
+    <h1>🌱 보리 낱알 발아 및 지베렐린 신호전달 정밀 시뮬레이션</h1>
+    
+    <div class="main-layout">
+        <!-- [좌측] 시각화 애니메이션 영역 -->
+        <div class="visual-box">
+            <div class="cell-alpha">
+                <span class="cell-label">상단부 식물세포 (@) [세포막 통과]</span>
+                
+                <div class="ribosome">리보솜 (번역 장소)</div>
+
+                <div class="nucleus">
+                    <span class="nucleus-label">핵 (이중막 / 핵공)</span>
+                    <div id="gene-info" style="font-size: 11px; color: #93c5fd; text-align: center; margin-top: 15px;">
+                        유전자 A 및 B 보유
+                    </div>
+                </div>
+            </div>
+
+            <!-- 움직이는 분자들 -->
+            <div id="gibberellin" class="molecule">지베렐린</div>
+            <div id="poly-x" class="molecule">폴리펩타이드 X</div>
+            <div id="poly-y" class="molecule">폴리펩타이드 Y</div>
+        </div>
+
+        <!-- [우측] 카운터 및 상세 설명 패널 -->
+        <div class="control-box">
+            <div>
+                <!-- 이중막 통과 횟수 카운터 (시험 대비용 핵심) -->
+                <div class="counter-panel">
+                    <div class="counter-title">📊 핵 이중막 통과 횟수 카운터</div>
+                    <div class="counter-row"><span>• 지베렐린 통과 횟수:</span> <b id="cnt-g" style="color: #ef4444;">0회</b></div>
+                    <div class="counter-row"><span>• 폴리펩타이드 X 통과 횟수:</span> <b id="cnt-x" style="color: #f97316;">0회</b></div>
+                    <div class="counter-row"><span>• 폴리펩타이드 Y 통과 횟수:</span> <b id="cnt-y" style="color: #a855f7;">0회</b></div>
+                </div>
+
+                <!-- 단계별 상세 설명 및 생물학적 이유 -->
+                <div class="counter-title">📝 단계별 상세 과정 및 생물학적 해설</div>
+                <div id="status-text" class="explanation-panel">
+                    '다음 단계 진행' 버튼을 눌러 시뮬레이션을 시작하세요.<br>지베렐린의 이동, 전사·번역 장소, 이중막 통과 여부를 단계별로 확인할 수 있습니다.
+                </div>
+            </div>
+            
+            <div>
+                <div class="btn-group">
+                    <button id="next-btn" onclick="nextStep()">다음 단계 진행</button>
+                    <button onclick="resetSim()" style="background-color: #64748b;">처음으로</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let step = 0;
+    const statusText = document.getElementById("status-text");
+    const gibberellin = document.getElementById("gibberellin");
+    const polyX = document.getElementById("poly-x");
+    const polyY = document.getElementById("poly-y");
+    const nextBtn = document.getElementById("next-btn");
+
+    const cntG = document.getElementById("cnt-g");
+    const cntX = document.getElementById("cnt-x");
+    const cntY = document.getElementById("cnt-y");
+
+    function nextStep() {
+        step++;
+        if (step === 1) {
+            // 단계 1: 하단부에서 생성되어 상단부 세포(@) 안으로 진입
+            gibberellin.style.left = "100px";
+            gibberellin.style.top = "200px";
+            cntG.innerText = "0회";
+            statusText.innerHTML = "<b>[단계 1]</b> 보리 낱알 하단부 세포에서 지베렐린이 생성되어 세포 밖으로 분비된 뒤, 상단부 식물세포(<b>@</b>)의 세포막(단일막)을 통과해 세포질로 들어옵니다.<br><i>(※ 아직 핵의 이중막을 통과하지 않았으므로 통과 횟수 0회)</i>";
+        } 
+        else if (step === 2) {
+            // 단계 2: 핵 내부로 진입 및 유전자 A 전사
+            gibberellin.style.left = "310px";
+            gibberellin.style.top = "190px";
+            cntG.innerText = "1회";
+            statusText.innerHTML = "<b>[단계 2]</b> 세포질로 들어온 지베렐린이 <b>핵의 이중막(핵막)을 통과하여 핵 내부로 진입</b>합니다. [지베렐린 이중막 통과: <b>1회</b>]<br>핵 내에서 유전자 A의 <b>전사</b>가 촉진되어 전령 RNA(A')가 형성됩니다.<br><i>(※ 전사는 DNA가 있는 <b>핵 내부</b>에서 일어납니다!)</i>";
+        }
+        else if (step === 3) {
+            // 단계 3: 세포질 리보솜으로 나와서 X 합성 후, 다시 핵 안으로 들어가 B 전사 촉진
+            polyX.style.opacity = "1";
+            polyX.style.left = "90px";
+            polyX.style.top = "255px";
+            
+            setTimeout(() => {
+                polyX.style.left = "330px";
+                polyX.style.top = "220px";
+            }, 900);
+
+            cntX.innerText = "1회";
+            statusText.innerHTML = "<b>[단계 3]</b> 형성된 mRNA가 세포질의 <b>리보솜으로 이동해 번역</b>되어 <b>폴리펩타이드 X</b>가 합성됩니다.<br>이후 X는 <b>다시 핵의 이중막을 통과해 핵 내부로 들어가</b> 유전자 B에 물리적으로 결합하여 B의 전사를 촉진합니다. [폴리펩타이드 X 이중막 통과: <b>1회</b>]";
+        }
+        else if (step === 4) {
+            // 단계 4: 유전자 B 전사/번역 후 Y 형성 및 세포 밖 방출
+            polyY.style.opacity = "1";
+            polyY.style.left = "310px";
+            polyY.style.top = "250px";
+
+            setTimeout(() => {
+                polyY.style.left = "90px";
+                polyY.style.top = "255px";
+            }, 900);
+
+            setTimeout(() => {
+                polyY.style.left = "-60px";
+                polyY.style.top = "380px";
+            }, 1800);
+
+            cntY.innerText = "0회";
+            statusText.innerHTML = "<b>[단계 4]</b> 유전자 B가 전사·번역(리보솜)되어 <b>폴리펩타이드 Y</b>가 형성됩니다. Y는 핵막을 다시 통과할 필요 없이 <b>세포 밖으로 최종 방출</b>되어 녹말을 분해합니다! [폴리펩타이드 Y 이중막 통과: <b>0회</b>]<br>🎉 <i>시뮬레이션 완료!</i>";
+            
+            nextBtn.disabled = true;
+        }
+    }
+
+    function resetSim() {
+        step = 0;
+        gibberellin.style.left = "-60px";
+        gibberellin.style.top = "230px";
+        polyX.style.opacity = "0";
+        polyX.style.left = "80px";
+        polyX.style.top = "260px";
+        polyY.style.opacity = "0";
+        polyY.style.left = "80px";
+        polyY.style.top = "260px";
+        
+        cntG.innerText = "0회";
+        cntX.innerText = "0회";
+        cntY.innerText = "0회";
+        
+        statusText.innerHTML = "시뮬레이션이 초기화되었습니다. '다음 단계 진행' 버튼을 눌러주세요.";
+        nextBtn.disabled = false;
+    }
+</script>
+
+</body>
+</html>
